@@ -126,7 +126,6 @@ jobs:
       - name: 'Configure'
         run: >
           bash configure
-          MAKE=/usr/bin/make
           --with-conf-name=${{ inputs.platform }}
           ${{ matrix.flags }}
           --with-version-opt=${GITHUB_ACTOR}-${GITHUB_SHA}
