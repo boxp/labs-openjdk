@@ -88,8 +88,10 @@ jobs:
       - name: 'Get MSYS2'
         uses: ./.github/actions/get-msys2
 
-      - name: 'Ensure MSYS2-native make'
-        run: pacman -Sy --noconfirm make
+      - name: 'Install MinGW64 native make'
+        run: |
+          pacman -Sy --noconfirm mingw-w64-x86_64-make
+          /mingw64/bin/make --version
         shell: bash
 
       - name: 'Get the BootJDK'
