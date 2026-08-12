@@ -19,15 +19,10 @@ public enum ARMKind implements PlatformKind {
     V128_WORD(16); // NEON 128-bit
 
     private final int size;
-    private final EnumKey key = new EnumKey(this);
+    private final EnumKey<ARMKind> key = new EnumKey<>(this);
 
     ARMKind(int size) {
         this.size = size;
-    }
-
-    @Override
-    public String name() {
-        return name();
     }
 
     @Override

@@ -28,12 +28,12 @@ package jdk.vm.ci.arm;
 
 import java.nio.ByteOrder;
 import java.util.EnumSet;
+import java.util.List;
 
 import jdk.vm.ci.code.Architecture;
 import jdk.vm.ci.code.CPUFeatureName;
 import jdk.vm.ci.code.Register;
 import jdk.vm.ci.code.Register.RegisterCategory;
-import jdk.vm.ci.code.RegisterArray;
 import jdk.vm.ci.meta.JavaKind;
 import jdk.vm.ci.meta.PlatformKind;
 
@@ -74,7 +74,7 @@ public class ARM extends Architecture {
     public static final Register fp  = r11;
     public static final Register ip  = r12;
 
-    public static final RegisterArray cpuRegisters = new RegisterArray(
+    public static final List<Register> cpuRegisters = List.of(
         r0, r1, r2, r3, r4, r5, r6, r7,
         r8, r9, r10, r11, r12, r13, r14, r15
     );
@@ -114,7 +114,7 @@ public class ARM extends Architecture {
     public static final Register s30 = new Register(46, 30, "s30", FP);
     public static final Register s31 = new Register(47, 31, "s31", FP);
 
-    public static final RegisterArray allRegisters = new RegisterArray(
+    public static final List<Register> allRegisters = List.of(
         r0,  r1,  r2,  r3,  r4,  r5,  r6,  r7,
         r8,  r9,  r10, r11, r12, r13, r14, r15,
         s0,  s1,  s2,  s3,  s4,  s5,  s6,  s7,
@@ -134,14 +134,7 @@ public class ARM extends Architecture {
     private final EnumSet<CPUFeature> features;
 
     public ARM(EnumSet<CPUFeature> features) {
-        super("arm",
-              16,  // word size in bits (32-bit)
-              ByteOrder.LITTLE_ENDIAN,
-              true,  // unalignedMemoryAccess
-              allRegisters,
-              0,   // implicitNullCheckLimit
-              1,   // returnAddressSize (ARM uses LR not stack)
-              1);  // machineCodeCallDisplacementOffset
+        super("arm", ARMKind.DWORD, ByteOrder.LITTLE_ENDIAN, true, allRegisters, 0, 0, 0);
         this.features = features;
     }
 
