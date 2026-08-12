@@ -91,6 +91,7 @@ jobs:
       - name: 'Install MinGW64 native make'
         run: |
           pacman -Sy --noconfirm mingw-w64-x86_64-make
+          ln -sf /mingw64/bin/mingw32-make.exe /mingw64/bin/make.exe
           /mingw64/bin/make --version
         shell: bash
 
