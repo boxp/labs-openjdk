@@ -114,6 +114,24 @@ public class ARM extends Architecture {
     public static final Register s30 = new Register(46, 30, "s30", FP);
     public static final Register s31 = new Register(47, 31, "s31", FP);
 
+    // A VFP double register overlaps two consecutive single registers.
+    public static final Register d0 = s0;
+    public static final Register d1 = s2;
+    public static final Register d2 = s4;
+    public static final Register d3 = s6;
+    public static final Register d4 = s8;
+    public static final Register d5 = s10;
+    public static final Register d6 = s12;
+    public static final Register d7 = s14;
+    public static final Register d8 = s16;
+    public static final Register d9 = s18;
+    public static final Register d10 = s20;
+    public static final Register d11 = s22;
+    public static final Register d12 = s24;
+    public static final Register d13 = s26;
+    public static final Register d14 = s28;
+    public static final Register d15 = s30;
+
     public static final List<Register> allRegisters = List.of(
         r0,  r1,  r2,  r3,  r4,  r5,  r6,  r7,
         r8,  r9,  r10, r11, r12, r13, r14, r15,
