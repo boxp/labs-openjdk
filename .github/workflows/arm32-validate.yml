@@ -16,6 +16,12 @@ jobs:
       - name: 'Checkout'
         uses: actions/checkout@v4
 
+      - name: 'Set up JDK 21'
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
       - name: 'Check ARM32 JVMCI files exist'
         run: |
           echo "=== Checking ARM32 JVMCI implementation files ==="
@@ -37,15 +43,28 @@ jobs:
           fi
           echo "All ARM32 JVMCI files are present!"
 
-      - name: 'Validate Java class declarations'
+      - name: 'Compile jdk.internal.vm.ci module (including ARM32 sources)'
         run: |
-          for f in \
-            src/jdk.internal.vm.ci/share/classes/jdk/vm/ci/arm/ARM.java \
-            src/jdk.internal.vm.ci/share/classes/jdk/vm/ci/arm/ARMKind.java; do
-            if grep -qE "^public (class|enum|@interface)" "$f"; then
-              echo "OK: $f has valid top-level declaration"
+          echo "=== Compiling jdk.internal.vm.ci module sources ==="
+          mkdir -p /tmp/arm32-out
+          # Compile all JVMCI source files together as a module to catch API compatibility errors
+          javac \
+            --release 21 \
+            --module-source-path "src/*/share/classes" \
+            --module jdk.internal.vm.ci \
+            -d /tmp/arm32-out
+          echo "jdk.internal.vm.ci module (including ARM32 JVMCI) compiled successfully!"
+
+      - name: 'Verify ARM32 classes were produced'
+        run: |
+          for cls in \
+            "jdk/vm/ci/arm/ARM.class" \
+            "jdk/vm/ci/arm/ARMKind.class"; do
+            if [ -f "/tmp/arm32-out/jdk.internal.vm.ci/$cls" ]; then
+              echo "OK: $cls"
             else
-              echo "WARNING: unexpected structure in $f"
+              echo "ERROR: compiled class not found: $cls"
+              exit 1
             fi
           done
-          echo "ARM32 JVMCI stub validation complete."
+          echo "ARM32 JVMCI class files verified!"

@@ -12,17 +12,32 @@ import jdk.vm.ci.meta.PlatformKind;
 public enum ARMKind implements PlatformKind {
     BYTE(1),
     WORD(2),
-    DWORD(4),     // 32-bit int / float / pointer
-    QWORD(8),     // 64-bit via register pair (r0:r1) or VFP d0
+    DWORD(4),     // 32-bit int / pointer
+    QWORD(8),     // 64-bit via register pair (r0:r1)
     SINGLE(4),    // VFP single-precision float (s registers)
     DOUBLE(8),    // VFP double-precision float (d registers)
-    V128_WORD(16); // NEON 128-bit
+    V128_WORD(16, WORD); // NEON 128-bit: 8 x 16-bit halfwords
 
     private final int size;
+    private final int vectorLength;
+    private final ARMKind scalar;
     private final EnumKey<ARMKind> key = new EnumKey<>(this);
 
     ARMKind(int size) {
         this.size = size;
+        this.scalar = this;
+        this.vectorLength = 1;
+    }
+
+    ARMKind(int size, ARMKind scalar) {
+        this.size = size;
+        this.scalar = scalar;
+        assert size % scalar.size == 0;
+        this.vectorLength = size / scalar.size;
+    }
+
+    public ARMKind getScalar() {
+        return scalar;
     }
 
     @Override
@@ -37,19 +52,19 @@ public enum ARMKind implements PlatformKind {
 
     @Override
     public int getVectorLength() {
-        return 1;
+        return vectorLength;
     }
 
     @Override
     public char getTypeChar() {
         return switch (this) {
-            case BYTE    -> 'b';
-            case WORD    -> 'w';
-            case DWORD   -> 'd';
-            case QWORD   -> 'q';
-            case SINGLE  -> 'S';
-            case DOUBLE  -> 'D';
-            case V128_WORD -> 'V';
+            case BYTE      -> 'b';
+            case WORD      -> 'w';
+            case DWORD     -> 'd';
+            case QWORD     -> 'q';
+            case SINGLE    -> 'S';
+            case DOUBLE    -> 'D';
+            case V128_WORD -> 'v';
         };
     }
 
@@ -58,6 +73,6 @@ public enum ARMKind implements PlatformKind {
     }
 
     public boolean isFP() {
-        return this == SINGLE || this == DOUBLE;
+        return this == SINGLE || this == DOUBLE || this == V128_WORD;
     }
 }

@@ -172,8 +172,10 @@ public class ARM extends Architecture {
         return switch (javaKind) {
             case Boolean, Byte   -> ARMKind.BYTE;
             case Short, Char     -> ARMKind.WORD;
-            case Int, Float      -> ARMKind.DWORD;
-            case Long, Double    -> ARMKind.QWORD;
+            case Int             -> ARMKind.DWORD;
+            case Long            -> ARMKind.QWORD;
+            case Float           -> ARMKind.SINGLE;
+            case Double          -> ARMKind.DOUBLE;
             case Object          -> ARMKind.DWORD;  // 32-bit pointer
             default -> throw new IllegalArgumentException("No ARM kind for Java kind " + javaKind);
         };
