@@ -46,18 +46,25 @@ jobs:
       - name: 'Compile ARM32 JVMCI sources against JVMCI API'
         run: |
           echo "=== Compiling ARM32 JVMCI source files ==="
+          JVMCI_BASE=src/jdk.internal.vm.ci/share/classes/jdk/vm/ci
+          STAGE=/tmp/jvmci-stage/jdk/vm/ci
           mkdir -p /tmp/arm32-out
-          # Compile only the ARM32 JVMCI files using the JVMCI source tree as sourcepath.
-          # This avoids pulling in java.base or platform backend sources (which use preview
-          # features and generated files not present in a bare checkout).
-          JVMCI_SRC=src/jdk.internal.vm.ci/share/classes
+
+          # Stage only the JVMCI API packages needed by ARM32, excluding:
+          # - module-info.java (triggers module mode which pulls in all sources)
+          # - hotspot/ (uses unnamed-variable preview features and jdk.internal.* access)
+          # - services/ (imports jdk.internal.util which is not exported to unnamed module)
+          for pkg in code meta common arm; do
+            cp -r "$JVMCI_BASE/$pkg" "$STAGE/"
+          done
+
           javac \
             --release 21 \
-            -sourcepath "$JVMCI_SRC" \
+            -sourcepath /tmp/jvmci-stage \
             -d /tmp/arm32-out \
-            "$JVMCI_SRC/jdk/vm/ci/arm/ARM.java" \
-            "$JVMCI_SRC/jdk/vm/ci/arm/ARMKind.java" \
-            "$JVMCI_SRC/jdk/vm/ci/arm/package-info.java"
+            "$STAGE/arm/ARM.java" \
+            "$STAGE/arm/ARMKind.java" \
+            "$STAGE/arm/package-info.java"
           echo "ARM32 JVMCI sources compiled successfully!"
 
       - name: 'Verify ARM32 classes were produced'
