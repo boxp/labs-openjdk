@@ -408,7 +408,7 @@ jobs:
       runs-on: ubuntu-22.04
       dry-run: ${{ needs.prepare.outputs.dry-run == 'true' }}
       debug-suffix: -debug
-    if: false
+    if: false  # test harness unchanged by ARM32 JVMCI; disabled to reduce CI cost on this fork
 
   test-linux-x64-static:
     name: linux-x64-static
@@ -423,7 +423,7 @@ jobs:
       runs-on: ubuntu-22.04
       dry-run: ${{ needs.prepare.outputs.dry-run == 'true' }}
       static-suffix: "-static"
-    if: false
+    if: false  # test harness unchanged by ARM32 JVMCI; disabled to reduce CI cost on this fork
 
   test-macos-aarch64:
     name: macos-aarch64
@@ -438,7 +438,7 @@ jobs:
       dry-run: ${{ needs.prepare.outputs.dry-run == 'true' }}
       xcode-toolset-version: '15.4'
       debug-suffix: -debug
-    if: false
+    if: false  # test harness unchanged by ARM32 JVMCI; disabled to reduce CI cost on this fork
 
   test-windows-x64:
     name: windows-x64
@@ -452,4 +452,4 @@ jobs:
       runs-on: windows-2022
       dry-run: ${{ needs.prepare.outputs.dry-run == 'true' }}
       debug-suffix: -debug
-    if: false
+    if: false  # test harness unchanged by ARM32 JVMCI; disabled to reduce CI cost on this fork
