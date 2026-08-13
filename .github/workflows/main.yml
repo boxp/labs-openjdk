@@ -373,7 +373,7 @@ jobs:
       configure-arguments: --with-msvc-toolset-version=14.29 ${{ github.event.inputs.configure-arguments }}
       make-arguments: ${{ github.event.inputs.make-arguments }}
       dry-run: ${{ needs.prepare.outputs.dry-run == 'true' }}
-    if: needs.prepare.outputs.windows-aarch64 == 'true'
+    if: false  # Disabled: MSVC ARM64 toolset 14.44 unavailable on VS2026 runners
 
   build-docs:
     name: docs
