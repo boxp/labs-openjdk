@@ -332,7 +332,7 @@ jobs:
       configure-arguments: ${{ github.event.inputs.configure-arguments }}
       make-arguments: ${{ github.event.inputs.make-arguments }}
       dry-run: ${{ needs.prepare.outputs.dry-run == 'true' }}
-    if: needs.prepare.outputs.macos-x64 == 'true'
+    if: false  # macos-13 runners unavailable; ARM32 JVMCI is validated by linux/macos-aarch64
 
   build-macos-aarch64:
     name: macos-aarch64
