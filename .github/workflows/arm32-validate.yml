@@ -43,24 +43,29 @@ jobs:
           fi
           echo "All ARM32 JVMCI files are present!"
 
-      - name: 'Compile jdk.internal.vm.ci module (including ARM32 sources)'
+      - name: 'Compile ARM32 JVMCI sources against JVMCI API'
         run: |
-          echo "=== Compiling jdk.internal.vm.ci module sources ==="
+          echo "=== Compiling ARM32 JVMCI source files ==="
           mkdir -p /tmp/arm32-out
-          # Compile all JVMCI source files together as a module to catch API compatibility errors
+          # Compile only the ARM32 JVMCI files using the JVMCI source tree as sourcepath.
+          # This avoids pulling in java.base or platform backend sources (which use preview
+          # features and generated files not present in a bare checkout).
+          JVMCI_SRC=src/jdk.internal.vm.ci/share/classes
           javac \
             --release 21 \
-            --module-source-path "src/*/share/classes" \
-            --module jdk.internal.vm.ci \
-            -d /tmp/arm32-out
-          echo "jdk.internal.vm.ci module (including ARM32 JVMCI) compiled successfully!"
+            -sourcepath "$JVMCI_SRC" \
+            -d /tmp/arm32-out \
+            "$JVMCI_SRC/jdk/vm/ci/arm/ARM.java" \
+            "$JVMCI_SRC/jdk/vm/ci/arm/ARMKind.java" \
+            "$JVMCI_SRC/jdk/vm/ci/arm/package-info.java"
+          echo "ARM32 JVMCI sources compiled successfully!"
 
       - name: 'Verify ARM32 classes were produced'
         run: |
           for cls in \
             "jdk/vm/ci/arm/ARM.class" \
             "jdk/vm/ci/arm/ARMKind.class"; do
-            if [ -f "/tmp/arm32-out/jdk.internal.vm.ci/$cls" ]; then
+            if [ -f "/tmp/arm32-out/$cls" ]; then
               echo "OK: $cls"
             else
               echo "ERROR: compiled class not found: $cls"
