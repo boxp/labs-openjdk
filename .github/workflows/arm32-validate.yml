@@ -48,7 +48,7 @@ jobs:
           echo "=== Compiling ARM32 JVMCI source files ==="
           JVMCI_BASE=src/jdk.internal.vm.ci/share/classes/jdk/vm/ci
           STAGE=/tmp/jvmci-stage/jdk/vm/ci
-          mkdir -p /tmp/arm32-out
+          mkdir -p /tmp/arm32-out "$STAGE"
 
           # Stage only the JVMCI API packages needed by ARM32, excluding:
           # - module-info.java (triggers module mode which pulls in all sources)
