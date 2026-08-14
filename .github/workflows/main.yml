@@ -64,7 +64,7 @@ jobs:
       # issues causing jobs to remain QUEUED indefinitely. macos-aarch64 (macos-14)
       # provides equivalent coverage for JDK functionality. Can be enabled manually
       # via workflow_dispatch with platforms input.
-      EXCLUDED_PLATFORMS: 'alpine-linux-x64, macos-x64'
+      EXCLUDED_PLATFORMS: 'alpine-linux-x64,macos-x64'
     outputs:
       linux-x64: ${{ steps.include.outputs.linux-x64 }}
       linux-x64-variants: ${{ steps.include.outputs.linux-x64-variants }}
