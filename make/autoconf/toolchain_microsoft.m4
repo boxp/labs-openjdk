@@ -25,22 +25,7 @@
 
 ################################################################################
 # The order of these defines the priority by which we try to find them.
-VALID_VS_VERSIONS="2026 2022 2019"
-
-VS_DESCRIPTION_2026="Microsoft Visual Studio 2026"
-VS_VERSION_INTERNAL_2026=144
-VS_MSVCR_2026=vcruntime140.dll
-VS_VCRUNTIME_1_2026=vcruntime140_1.dll
-VS_MSVCP_2026=msvcp140.dll
-VS_ENVVAR_2026="VS180COMNTOOLS"
-VS_USE_UCRT_2026="true"
-VS_VS_INSTALLDIR_2026="Microsoft Visual Studio/18"
-VS_EDITIONS_2026="BuildTools Community Professional Enterprise"
-VS_SDK_INSTALLDIR_2026=
-VS_VS_PLATFORM_NAME_2026="v144"
-VS_SDK_PLATFORM_NAME_2026=
-VS_SUPPORTED_2026=true
-VS_TOOLSET_SUPPORTED_2026=true
+VALID_VS_VERSIONS="2022 2019"
 
 VS_DESCRIPTION_2019="Microsoft Visual Studio 2019"
 VS_VERSION_INTERNAL_2019=142
@@ -371,20 +356,6 @@ AC_DEFUN([TOOLCHAIN_EXTRACT_VISUAL_STUDIO_ENV],
   # Remove any paths containing # (typically F#) as that messes up make. This
   # is needed if visual studio was installed with F# support.
   [ VS_PATH=`$ECHO "$VS_PATH" | $SED 's/[^:#]*#[^:]*://g'` ]
-
-  # For aarch64 cross-compilation with MSVC, vcvarsamd64_arm64.bat may add both
-  # hostx64/x64 (native tools) and hostx64/arm64 (cross-compiler) to PATH, with
-  # x64 appearing first. This causes configure to select the x64 cl.exe instead
-  # of the arm64 cross-compiler (hostx64/arm64/cl.exe).
-  # Fix: prepend the arm64 cross-compiler directory to both VS_PATH and the
-  # current shell PATH so AC_PROG_CC finds arm64/cl.exe before x64/cl.exe.
-  if test "x$TARGET_CPU" = xaarch64; then
-    VS_ARM64_DIR=`$ECHO "$VS_PATH" | $SED 's/:/\n/g' | $GREP -i 'hostx64/arm64' | $SED -n '1p'`
-    if test -n "$VS_ARM64_DIR"; then
-      VS_PATH="$VS_ARM64_DIR:$VS_PATH"
-      export PATH="$VS_ARM64_DIR:$PATH"
-    fi
-  fi
 
   # Sometimes case is off
   if test -z "$WINDOWSSDKDIR"; then
