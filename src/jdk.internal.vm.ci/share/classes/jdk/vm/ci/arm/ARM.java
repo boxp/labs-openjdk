@@ -168,9 +168,13 @@ public class ARM extends Architecture {
         }
         ARMKind armKind = (ARMKind) platformKind;
         if (category.equals(CPU)) {
-            return armKind.isInteger();
+            // A CPU register has one 32-bit word.  JVMCI has no register-pair
+            // representation for ARM32, so QWORD values must use the stack.
+            return armKind == ARMKind.BYTE || armKind == ARMKind.WORD || armKind == ARMKind.DWORD;
         } else if (category.equals(FP)) {
-            return armKind.isFP();
+            // The register model exposes individual s registers, each of which
+            // holds one 32-bit single-precision value.
+            return armKind == ARMKind.SINGLE;
         }
         return false;
     }
@@ -180,7 +184,7 @@ public class ARM extends Architecture {
         if (category.equals(CPU)) {
             return ARMKind.DWORD;
         } else if (category.equals(FP)) {
-            return ARMKind.DOUBLE;
+            return ARMKind.SINGLE;
         }
         return null;
     }

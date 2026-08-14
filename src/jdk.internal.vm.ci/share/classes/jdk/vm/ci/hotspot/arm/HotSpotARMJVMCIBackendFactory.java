@@ -49,7 +49,7 @@ public final class HotSpotARMJVMCIBackendFactory implements HotSpotJVMCIBackendF
         ConstantReflectionProvider constantReflection;
         HotSpotMetaAccessProvider metaAccess;
         StackIntrospection stackIntrospection;
-        try (InitTimer _ = timer("create providers")) {
+        try (InitTimer t = timer("create providers")) {
             metaAccess = new HotSpotMetaAccessProvider(runtime);
             registerConfig = new ARMHotSpotRegisterConfig(target);
             codeCache = new HotSpotCodeCacheProvider(runtime, target, registerConfig);

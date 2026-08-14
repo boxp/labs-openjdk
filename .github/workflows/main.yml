@@ -332,7 +332,7 @@ jobs:
       configure-arguments: ${{ github.event.inputs.configure-arguments }}
       make-arguments: ${{ github.event.inputs.make-arguments }}
       dry-run: ${{ needs.prepare.outputs.dry-run == 'true' }}
-    if: false  # macos-13 runners unavailable; ARM32 JVMCI is validated by linux/macos-aarch64
+    if: needs.prepare.outputs.macos-x64 == 'true'
 
   build-macos-aarch64:
     name: macos-aarch64
@@ -373,7 +373,7 @@ jobs:
       configure-arguments: --with-msvc-toolset-version=14.29 ${{ github.event.inputs.configure-arguments }}
       make-arguments: ${{ github.event.inputs.make-arguments }}
       dry-run: ${{ needs.prepare.outputs.dry-run == 'true' }}
-    if: false  # Disabled: MSVC ARM64 toolset 14.44 unavailable on VS2026 runners
+    if: needs.prepare.outputs.windows-aarch64 == 'true'
 
   build-docs:
     name: docs
@@ -408,7 +408,6 @@ jobs:
       runs-on: ubuntu-22.04
       dry-run: ${{ needs.prepare.outputs.dry-run == 'true' }}
       debug-suffix: -debug
-    if: false  # test harness unchanged by ARM32 JVMCI; disabled to reduce CI cost on this fork
 
   test-linux-x64-static:
     name: linux-x64-static
@@ -423,7 +422,6 @@ jobs:
       runs-on: ubuntu-22.04
       dry-run: ${{ needs.prepare.outputs.dry-run == 'true' }}
       static-suffix: "-static"
-    if: false  # test harness unchanged by ARM32 JVMCI; disabled to reduce CI cost on this fork
 
   test-macos-aarch64:
     name: macos-aarch64
@@ -438,7 +436,6 @@ jobs:
       dry-run: ${{ needs.prepare.outputs.dry-run == 'true' }}
       xcode-toolset-version: '15.4'
       debug-suffix: -debug
-    if: false  # test harness unchanged by ARM32 JVMCI; disabled to reduce CI cost on this fork
 
   test-windows-x64:
     name: windows-x64
@@ -452,4 +449,3 @@ jobs:
       runs-on: windows-2022
       dry-run: ${{ needs.prepare.outputs.dry-run == 'true' }}
       debug-suffix: -debug
-    if: false  # test harness unchanged by ARM32 JVMCI; disabled to reduce CI cost on this fork

@@ -57,29 +57,11 @@ jobs:
             exit 1
           fi
 
-      - name: 'Compile ARM32 JVMCI sources against JVMCI API'
+      - name: 'Compile ARM32 JVMCI module sources'
         run: |
           echo "=== Compiling ARM32 JVMCI source files ==="
-          JVMCI_BASE=src/jdk.internal.vm.ci/share/classes/jdk/vm/ci
-          STAGE=/tmp/jvmci-stage/jdk/vm/ci
-          mkdir -p /tmp/arm32-out "$STAGE"
-
-          # Stage only the JVMCI API packages needed by ARM32, excluding:
-          # - module-info.java (triggers module mode which pulls in all sources)
-          # - hotspot/ (uses unnamed-variable preview features and jdk.internal.* access)
-          # - services/ (imports jdk.internal.util which is not exported to unnamed module)
-          for pkg in code meta common arm; do
-            cp -r "$JVMCI_BASE/$pkg" "$STAGE/"
-          done
-
-          javac \
-            --release 21 \
-            -sourcepath /tmp/jvmci-stage \
-            -d /tmp/arm32-out \
-            "$STAGE/arm/ARM.java" \
-            "$STAGE/arm/ARMKind.java" \
-            "$STAGE/arm/ARMRegister.java" \
-            "$STAGE/arm/package-info.java"
+          find src/jdk.internal.vm.ci/share/classes -name '*.java' > /tmp/jvmci-sources
+          javac --release 21 -d /tmp/arm32-out @/tmp/jvmci-sources
           echo "ARM32 JVMCI sources compiled successfully!"
 
       - name: 'Verify ARM32 classes were produced'
@@ -87,7 +69,9 @@ jobs:
           for cls in \
             "jdk/vm/ci/arm/ARM.class" \
             "jdk/vm/ci/arm/ARMKind.class" \
-            "jdk/vm/ci/arm/ARMRegister.class"; do
+            "jdk/vm/ci/arm/ARMRegister.class" \
+            "jdk/vm/ci/hotspot/arm/ARMHotSpotRegisterConfig.class" \
+            "jdk/vm/ci/hotspot/arm/HotSpotARMJVMCIBackendFactory.class"; do
             if [ -f "/tmp/arm32-out/$cls" ]; then
               echo "OK: $cls"
             else
