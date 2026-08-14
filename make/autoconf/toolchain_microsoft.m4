@@ -372,6 +372,17 @@ AC_DEFUN([TOOLCHAIN_EXTRACT_VISUAL_STUDIO_ENV],
   # is needed if visual studio was installed with F# support.
   [ VS_PATH=`$ECHO "$VS_PATH" | $SED 's/[^:#]*#[^:]*://g'` ]
 
+  # For aarch64 cross-compilation with MSVC, vcvarsamd64_arm64.bat may add both
+  # hostx64/x64 (native tools) and hostx64/arm64 (cross-compiler) to PATH, with
+  # x64 appearing first. This causes configure to select the x64 cl.exe instead
+  # of the arm64 cross-compiler. Reorder VS_PATH to put arm64 directories first.
+  if test "x$TARGET_CPU" = xaarch64; then
+    VS_ARM64_DIR=`$ECHO "$VS_PATH" | $SED 's/:/\n/g' | $GREP -i 'hostx64/arm64' | $SED -n '1p'`
+    if test -n "$VS_ARM64_DIR"; then
+      VS_PATH="$VS_ARM64_DIR:$VS_PATH"
+    fi
+  fi
+
   # Sometimes case is off
   if test -z "$WINDOWSSDKDIR"; then
     WINDOWSSDKDIR="$WindowsSdkDir"
