@@ -106,13 +106,26 @@ jobs:
         id: toolchain-check
         run: |
           set +e
-          '/c/Program Files/Microsoft Visual Studio/18/Enterprise/vc/auxiliary/build/vcvars64.bat' -vcvars_ver=${{ inputs.msvc-toolset-version }}
-          if [ $? -eq 0 ]; then
-            echo "Toolchain is already installed"
-            echo "toolchain-installed=true" >> $GITHUB_OUTPUT
+          if [ '${{ inputs.msvc-toolset-architecture }}' = 'arm64' ]; then
+            # For ARM64 cross-compilation, check if the arm64 cross-compiler exists
+            arm64_cl=$(find '/c/Program Files/Microsoft Visual Studio/18/Enterprise/vc/tools/msvc' \
+              -name "cl.exe" -path "*/hostx64/arm64/*" 2>/dev/null | head -1)
+            if [ -n "$arm64_cl" ]; then
+              echo "Toolchain (ARM64 cross-compiler) is already installed: $arm64_cl"
+              echo "toolchain-installed=true" >> $GITHUB_OUTPUT
+            else
+              echo "Toolchain (ARM64 cross-compiler) is not yet installed"
+              echo "toolchain-installed=false" >> $GITHUB_OUTPUT
+            fi
           else
-            echo "Toolchain is not yet installed"
-            echo "toolchain-installed=false" >> $GITHUB_OUTPUT
+            '/c/Program Files/Microsoft Visual Studio/18/Enterprise/vc/auxiliary/build/vcvars64.bat' -vcvars_ver=${{ inputs.msvc-toolset-version }}
+            if [ $? -eq 0 ]; then
+              echo "Toolchain is already installed"
+              echo "toolchain-installed=true" >> $GITHUB_OUTPUT
+            else
+              echo "Toolchain is not yet installed"
+              echo "toolchain-installed=false" >> $GITHUB_OUTPUT
+            fi
           fi
 
       - name: 'Install toolchain and dependencies'
