@@ -60,8 +60,12 @@ jobs:
       - name: 'Compile ARM32 JVMCI module sources'
         run: |
           echo "=== Compiling ARM32 JVMCI source files ==="
+          mkdir -p /tmp/arm32-out
           find src/jdk.internal.vm.ci/share/classes -name '*.java' > /tmp/jvmci-sources
-          javac --release 21 -d /tmp/arm32-out @/tmp/jvmci-sources
+          javac --release 21 \
+            --add-exports java.base/jdk.internal.util=jdk.internal.vm.ci \
+            -d /tmp/arm32-out \
+            @/tmp/jvmci-sources
           echo "ARM32 JVMCI sources compiled successfully!"
 
       - name: 'Verify ARM32 classes were produced'
