@@ -49,7 +49,7 @@ public class AArch64HotSpotJVMCIBackendFactory implements HotSpotJVMCIBackendFac
     private static EnumSet<AArch64.CPUFeature> computeFeatures(AArch64HotSpotVMConfig config) {
         // Configure the feature set using the HotSpot flag settings.
         Map<String, Long> constants = config.getStore().getConstants();
-        return HotSpotJVMCIBackendFactory.convertFeatures(CPUFeature.class, constants, idx -> 1L << idx, ignored -> config.vmVersionFeatures, emptyMap());
+        return HotSpotJVMCIBackendFactory.convertFeatures(CPUFeature.class, constants, idx -> 1L << idx, _ -> config.vmVersionFeatures, emptyMap());
     }
 
     private static TargetDescription createTarget(AArch64HotSpotVMConfig config) {
@@ -101,24 +101,24 @@ public class AArch64HotSpotJVMCIBackendFactory implements HotSpotJVMCIBackendFac
         ConstantReflectionProvider constantReflection;
         HotSpotMetaAccessProvider metaAccess;
         StackIntrospection stackIntrospection;
-        try (InitTimer providersTimer = timer("create providers")) {
-            try (InitTimer metaAccessTimer = timer("create MetaAccess provider")) {
+        try (InitTimer _ = timer("create providers")) {
+            try (InitTimer _ = timer("create MetaAccess provider")) {
                 metaAccess = createMetaAccess(runtime);
             }
-            try (InitTimer registerConfigTimer = timer("create RegisterConfig")) {
+            try (InitTimer _ = timer("create RegisterConfig")) {
                 regConfig = createRegisterConfig(config, target);
             }
-            try (InitTimer codeCacheTimer = timer("create CodeCache provider")) {
+            try (InitTimer _ = timer("create CodeCache provider")) {
                 codeCache = createCodeCache(runtime, target, regConfig);
             }
-            try (InitTimer constantReflectionTimer = timer("create ConstantReflection provider")) {
+            try (InitTimer _ = timer("create ConstantReflection provider")) {
                 constantReflection = createConstantReflection(runtime);
             }
-            try (InitTimer stackIntrospectionTimer = timer("create StackIntrospection provider")) {
+            try (InitTimer _ = timer("create StackIntrospection provider")) {
                 stackIntrospection = new HotSpotStackIntrospection(runtime);
             }
         }
-        try (InitTimer backendTimer = timer("instantiate backend")) {
+        try (InitTimer _ = timer("instantiate backend")) {
             return createBackend(metaAccess, codeCache, constantReflection, stackIntrospection);
         }
     }
