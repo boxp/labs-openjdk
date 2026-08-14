@@ -37,6 +37,11 @@ import jdk.vm.ci.meta.ValueKind;
  * Implements AAPCS (ARM Procedure Call Standard) for ARM32:
  * - Integer/pointer args: r0-r3; 64-bit longs are passed on the stack
  * - Floating-point args: VFP s0-s15 for float; doubles are passed on the stack
+ *
+ * Note: ARM32 JVMCI does not model register pairs (r0:r1 for long, s0:s1 for
+ * double). 64-bit values are therefore always passed and returned via the stack
+ * or via r0 as a placeholder (the actual 64-bit convention is handled by the
+ * JVM frame at a lower level).
  */
 public final class ARMHotSpotRegisterConfig implements RegisterConfig {
     private static final List<Register> GENERAL_ARGUMENTS = List.of(r0, r1, r2, r3);
@@ -85,14 +90,13 @@ public final class ARMHotSpotRegisterConfig implements RegisterConfig {
             JavaKind kind = parameterTypes[i].getJavaKind().getStackKind();
             ValueKind<?> valueKind = valueKindFactory.getValueKind(kind);
             if (kind == JavaKind.Long) {
-                // ARM32 JVMCI models CPU registers as one word only, so it
-                // cannot represent the required register pair for a long.
+                // ARM32 JVMCI has no register-pair model; pass long on the stack.
                 if (stack % 8 != 0) stack += 4;
                 locations[i] = StackSlot.get(valueKind, stack, !convention.out);
                 stack += 8;
             } else if (kind == JavaKind.Double) {
-                // A VFP s register is one word, and JVMCI cannot express a
-                // double as a paired s-register location.
+                // ARM32 JVMCI cannot express a double as paired s-registers;
+                // pass on the stack aligned to 8 bytes.
                 if (stack % 8 != 0) stack += 4;
                 locations[i] = StackSlot.get(valueKind, stack, !convention.out);
                 stack += 8;
@@ -126,9 +130,9 @@ public final class ARMHotSpotRegisterConfig implements RegisterConfig {
     public List<Register> getCallingConventionRegisters(Type type, JavaKind kind) {
         return switch (kind) {
             case Boolean, Byte, Short, Char, Int, Object -> GENERAL_ARGUMENTS;
-            case Long -> List.of();
+            // Long and Double have no register representation in this model.
+            case Long, Double -> List.of();
             case Float -> FP_SINGLE_ARGUMENTS;
-            case Double -> List.of();
             default -> throw JVMCIError.shouldNotReachHere();
         };
     }
@@ -136,9 +140,14 @@ public final class ARMHotSpotRegisterConfig implements RegisterConfig {
     @Override
     public Register getReturnRegister(JavaKind kind) {
         return switch (kind) {
-            case Boolean, Byte, Short, Char, Int, Long, Object -> r0;
+            case Boolean, Byte, Short, Char, Int, Object -> r0;
+            // ARM32 AAPCS: long returns in r0:r1 pair; JVMCI cannot model the
+            // pair, so r0 is used as the canonical placeholder register.
+            case Long -> r0;
             case Float -> s0;
-            case Double -> d0;
+            // ARM32 AAPCS VFP: double returns in d0 (= s0:s1 pair).
+            // Since JVMCI cannot model this pair, use s0 as a placeholder.
+            case Double -> s0;
             case Void, Illegal -> null;
             default -> throw new UnsupportedOperationException("no return register for type " + kind);
         };
