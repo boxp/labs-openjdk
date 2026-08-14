@@ -62,7 +62,7 @@ jobs:
           echo "=== Compiling ARM32 JVMCI source files ==="
           mkdir -p /tmp/arm32-out
           find src/jdk.internal.vm.ci/share/classes -name '*.java' > /tmp/jvmci-sources
-          javac --release 21 \
+          javac \
             --add-exports java.base/jdk.internal.util=jdk.internal.vm.ci \
             -d /tmp/arm32-out \
             @/tmp/jvmci-sources
