@@ -775,7 +775,7 @@ void JVMCINMethodData::add_failed_speculation(nmethod* nm, jlong speculation) {
   guarantee(index >= 0 && index <= max_jint, "Encoded JVMCI speculation index is not a positive Java int: " JLONG_FORMAT, index);
   int length = speculation & JVMCINMethodData::SPECULATION_LENGTH_MASK;
   if (index + length > (uint) nm->speculations_size()) {
-    fatal(INTPTR_FORMAT "[index: " JLONG_FORMAT ", length: %d out of bounds wrt encoded speculations of length %u", speculation, index, length, nm->speculations_size());
+    fatal(JLONG_FORMAT "[index: " JLONG_FORMAT ", length: %d out of bounds wrt encoded speculations of length %u", speculation, index, length, nm->speculations_size());
   }
   address data = nm->speculations_begin() + index;
   FailedSpeculation::add_failed_speculation(nm, _failed_speculations, data, length);
