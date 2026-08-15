@@ -35,19 +35,23 @@ import jdk.vm.ci.meta.ValueKind;
  * ARM EABI/VFPv3 register and calling-convention configuration for HotSpot.
  *
  * Implements AAPCS (ARM Procedure Call Standard) for ARM32:
- * - Integer/pointer args: r0-r3; 64-bit longs are passed on the stack
- * - Floating-point args: VFP s0-s15 for float; doubles are passed on the stack
- *
- * Note: ARM32 JVMCI does not model register pairs (r0:r1 for long, s0:s1 for
- * double). 64-bit values are therefore always passed and returned via the stack
- * or via r0 as a placeholder (the actual 64-bit convention is handled by the
- * JVM frame at a lower level).
+ * - Integer/pointer args: r0-r3 (one register each).
+ * - Long args: r0:r1 or r2:r3 register pair (even-register aligned); stack if no pair available.
+ *   JVMCI cannot represent register pairs; the even register (r0 or r2) is used as the
+ *   canonical placeholder and the CodeInstaller is responsible for the high word in r1/r3.
+ * - Float args: VFP s0-s15 (one s-register each).
+ * - Double args: VFP d0-d7 (d0=s0:s1, d1=s2:s3, ...); stack if no d-register available.
+ *   JVMCI cannot represent d-registers; the even s-register (s0, s2, ...) is used as
+ *   the canonical placeholder for the overlapping d-register.
  */
 public final class ARMHotSpotRegisterConfig implements RegisterConfig {
     private static final List<Register> GENERAL_ARGUMENTS = List.of(r0, r1, r2, r3);
     // Single-precision VFP argument registers s0-s15
     private static final List<Register> FP_SINGLE_ARGUMENTS = List.of(
         s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15);
+    // d-register placeholders (even s-registers s0,s2,...,s14 = d0,d1,...,d7)
+    private static final List<Register> FP_DOUBLE_ARGUMENTS = List.of(
+        s0, s2, s4, s6, s8, s10, s12, s14);
     private static final List<Register> RESERVED = List.of(r9, r10, r11, r12, sp, lr, pc);
     private final TargetDescription target;
     private final List<Register> allocatable;
@@ -90,16 +94,29 @@ public final class ARMHotSpotRegisterConfig implements RegisterConfig {
             JavaKind kind = parameterTypes[i].getJavaKind().getStackKind();
             ValueKind<?> valueKind = valueKindFactory.getValueKind(kind);
             if (kind == JavaKind.Long) {
-                // ARM32 JVMCI has no register-pair model; pass long on the stack.
-                if (stack % 8 != 0) stack += 4;
-                locations[i] = StackSlot.get(valueKind, stack, !convention.out);
-                stack += 8;
+                // AAPCS: long passes in an even-aligned register pair (r0:r1 or r2:r3).
+                // JVMCI cannot model pairs; the even register is the canonical placeholder.
+                if (general % 2 != 0) general++;  // align to even register
+                if (general + 1 < GENERAL_ARGUMENTS.size()) {
+                    locations[i] = GENERAL_ARGUMENTS.get(general).asValue(valueKind);
+                    general += 2;  // consume both registers of the pair
+                } else {
+                    if (stack % 8 != 0) stack += 4;
+                    locations[i] = StackSlot.get(valueKind, stack, !convention.out);
+                    stack += 8;
+                }
             } else if (kind == JavaKind.Double) {
-                // ARM32 JVMCI cannot express a double as paired s-registers;
-                // pass on the stack aligned to 8 bytes.
-                if (stack % 8 != 0) stack += 4;
-                locations[i] = StackSlot.get(valueKind, stack, !convention.out);
-                stack += 8;
+                // AAPCS VFP: double passes in a d-register (d0=s0:s1, d1=s2:s3, ...).
+                // JVMCI cannot model d-registers; the even s-register is the canonical placeholder.
+                if (fpSlot % 2 != 0) fpSlot++;  // align to even s-slot (= d-register boundary)
+                if (fpSlot + 1 < FP_SINGLE_ARGUMENTS.size()) {
+                    locations[i] = FP_SINGLE_ARGUMENTS.get(fpSlot).asValue(valueKind);
+                    fpSlot += 2;  // consume both s-registers of the d-register
+                } else {
+                    if (stack % 8 != 0) stack += 4;
+                    locations[i] = StackSlot.get(valueKind, stack, !convention.out);
+                    stack += 8;
+                }
             } else if (kind == JavaKind.Float) {
                 // AAPCS VFP: floats occupy a single s-slot.
                 if (fpSlot < FP_SINGLE_ARGUMENTS.size()) {
@@ -130,8 +147,10 @@ public final class ARMHotSpotRegisterConfig implements RegisterConfig {
     public List<Register> getCallingConventionRegisters(Type type, JavaKind kind) {
         return switch (kind) {
             case Boolean, Byte, Short, Char, Int, Object -> GENERAL_ARGUMENTS;
-            // Long and Double have no register representation in this model.
-            case Long, Double -> List.of();
+            // Long: r0, r2 as canonical placeholders for r0:r1 and r2:r3 pairs.
+            case Long -> List.of(r0, r2);
+            // Double: s0,s2,...,s14 as canonical placeholders for d0,d1,...,d7 (d=s-pair).
+            case Double -> FP_DOUBLE_ARGUMENTS;
             case Float -> FP_SINGLE_ARGUMENTS;
             default -> throw JVMCIError.shouldNotReachHere();
         };

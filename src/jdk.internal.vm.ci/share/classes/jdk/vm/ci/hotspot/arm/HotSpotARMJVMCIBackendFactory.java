@@ -31,8 +31,9 @@ import jdk.vm.ci.runtime.JVMCIBackend;
 public final class HotSpotARMJVMCIBackendFactory implements HotSpotJVMCIBackendFactory {
     private static TargetDescription createTarget() {
         Architecture arch = new ARM(EnumSet.noneOf(ARM.CPUFeature.class));
-        // ARM32 word size is 4 bytes (32-bit pointers and machine words).
-        return new TargetDescription(arch, true, 4, 4096, true);
+        // ARM32: word size is 4 bytes (32-bit pointers), but AAPCS requires 8-byte SP alignment
+        // at public interfaces (function call boundaries), so stackAlignment must be 8.
+        return new TargetDescription(arch, true, 8, 4096, true);
     }
 
     @Override

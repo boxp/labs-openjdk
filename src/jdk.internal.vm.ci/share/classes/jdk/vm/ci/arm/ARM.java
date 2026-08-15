@@ -168,13 +168,16 @@ public class ARM extends Architecture {
         }
         ARMKind armKind = (ARMKind) platformKind;
         if (category.equals(CPU)) {
-            // A CPU register has one 32-bit word.  JVMCI has no register-pair
-            // representation for ARM32, so QWORD values must use the stack.
-            return armKind == ARMKind.BYTE || armKind == ARMKind.WORD || armKind == ARMKind.DWORD;
+            // QWORD (long): modelled as an r-register pair (r0:r1, r2:r3) per AAPCS.
+            // JVMCI cannot represent pairs natively; the low-word register is used as
+            // the canonical placeholder and the CodeInstaller must handle the pair.
+            return armKind == ARMKind.BYTE || armKind == ARMKind.WORD
+                   || armKind == ARMKind.DWORD || armKind == ARMKind.QWORD;
         } else if (category.equals(FP)) {
-            // The register model exposes individual s registers, each of which
-            // holds one 32-bit single-precision value.
-            return armKind == ARMKind.SINGLE;
+            // DOUBLE: modelled as a d-register (d0 = s0:s1) per VFP AAPCS.
+            // JVMCI exposes individual s-registers; the even s-register (s0) is used
+            // as the canonical placeholder for the overlapping d-register.
+            return armKind == ARMKind.SINGLE || armKind == ARMKind.DOUBLE;
         }
         return false;
     }
@@ -182,9 +185,9 @@ public class ARM extends Architecture {
     @Override
     public PlatformKind getLargestStorableKind(RegisterCategory category) {
         if (category.equals(CPU)) {
-            return ARMKind.DWORD;
+            return ARMKind.QWORD;  // r-register pair (e.g. r0:r1)
         } else if (category.equals(FP)) {
-            return ARMKind.SINGLE;
+            return ARMKind.DOUBLE;  // d-register (e.g. d0 = s0:s1)
         }
         return null;
     }
