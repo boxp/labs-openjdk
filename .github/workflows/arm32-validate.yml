@@ -1,0 +1,86 @@
+name: 'ARM32 JVMCI Validation'
+
+on:
+  push:
+    branches:
+      - arm32-jvmci
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  validate-arm32-jvmci:
+    name: 'Validate ARM32 JVMCI files'
+    runs-on: ubuntu-22.04
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v4
+
+      - name: 'Set up JDK 21'
+        uses: actions/setup-java@v4
+        with:
+          java-version: '22'
+          distribution: 'temurin'
+
+      - name: 'Check ARM32 JVMCI files exist'
+        run: |
+          echo "=== Checking ARM32 JVMCI implementation files ==="
+          MISSING=0
+          for f in \
+            "src/jdk.internal.vm.ci/share/classes/jdk/vm/ci/arm/ARM.java" \
+            "src/jdk.internal.vm.ci/share/classes/jdk/vm/ci/arm/ARMKind.java" \
+            "src/jdk.internal.vm.ci/share/classes/jdk/vm/ci/arm/ARMRegister.java" \
+            "src/jdk.internal.vm.ci/share/classes/jdk/vm/ci/arm/package-info.java" \
+            "src/jdk.internal.vm.ci/share/classes/jdk/vm/ci/hotspot/arm/ARMHotSpotRegisterConfig.java" \
+            "src/jdk.internal.vm.ci/share/classes/jdk/vm/ci/hotspot/arm/HotSpotARMJVMCIBackendFactory.java" \
+            "src/jdk.internal.vm.ci/share/classes/module-info.java"; do
+            if [ -f "$f" ]; then
+              echo "OK: $f"
+            else
+              echo "MISSING: $f"
+              MISSING=$((MISSING+1))
+            fi
+          done
+          if [ $MISSING -gt 0 ]; then
+            echo "ERROR: $MISSING required files are missing"
+            exit 1
+          fi
+          echo "All ARM32 JVMCI files are present!"
+
+      - name: 'Verify module-info.java registers ARM backend service'
+        run: |
+          echo "=== Checking service provider registration in module-info.java ==="
+          if grep -q "HotSpotARMJVMCIBackendFactory" src/jdk.internal.vm.ci/share/classes/module-info.java; then
+            echo "OK: HotSpotARMJVMCIBackendFactory found in module-info.java"
+          else
+            echo "ERROR: HotSpotARMJVMCIBackendFactory not registered in module-info.java"
+            exit 1
+          fi
+
+      - name: 'Compile ARM32 JVMCI module sources'
+        run: |
+          echo "=== Compiling ARM32 JVMCI source files ==="
+          mkdir -p /tmp/arm32-out
+          find src/jdk.internal.vm.ci/share/classes -name '*.java' > /tmp/jvmci-sources
+          javac \
+            --add-exports java.base/jdk.internal.util=jdk.internal.vm.ci \
+            -d /tmp/arm32-out \
+            @/tmp/jvmci-sources
+          echo "ARM32 JVMCI sources compiled successfully!"
+
+      - name: 'Verify ARM32 classes were produced'
+        run: |
+          for cls in \
+            "jdk/vm/ci/arm/ARM.class" \
+            "jdk/vm/ci/arm/ARMKind.class" \
+            "jdk/vm/ci/arm/ARMRegister.class" \
+            "jdk/vm/ci/hotspot/arm/ARMHotSpotRegisterConfig.class" \
+            "jdk/vm/ci/hotspot/arm/HotSpotARMJVMCIBackendFactory.class"; do
+            if [ -f "/tmp/arm32-out/$cls" ]; then
+              echo "OK: $cls"
+            else
+              echo "ERROR: compiled class not found: $cls"
+              exit 1
+            fi
+          done
+          echo "ARM32 JVMCI class files verified!"

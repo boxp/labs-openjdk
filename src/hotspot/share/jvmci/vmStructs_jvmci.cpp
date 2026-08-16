@@ -857,7 +857,7 @@
   declare_constant(InvocationCounter::count_increment)                    \
   declare_constant(InvocationCounter::count_shift)                        \
                                                                           \
-  declare_constant(markWord::klass_shift)                                 \
+  LP64_ONLY(declare_constant(markWord::klass_shift))                      \
   declare_constant(markWord::hash_shift)                                  \
   declare_constant(markWord::monitor_value)                               \
                                                                           \

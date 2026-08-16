@@ -59,8 +59,15 @@ jobs:
     name: 'Prepare the run'
     runs-on: ubuntu-22.04
     env:
-      # List of platforms to exclude by default
-      EXCLUDED_PLATFORMS: 'alpine-linux-x64'
+      # List of platforms to exclude by default.
+      # macos-x64 excluded: GitHub macos-13 (Intel) runners have chronic availability
+      # issues causing jobs to remain QUEUED indefinitely. macos-aarch64 (macos-14)
+      # provides equivalent coverage for JDK functionality. Can be enabled manually
+      # via workflow_dispatch with platforms input.
+      # windows-aarch64 excluded: windows-2025 runners only have VS 2026; the ARM64
+      # cross-compilation tools (HostX64/arm64/cl.exe) are not reliably available in
+      # CI. Can be enabled manually via workflow_dispatch with platforms input.
+      EXCLUDED_PLATFORMS: 'alpine-linux-x64,macos-x64,windows-aarch64'
     outputs:
       linux-x64: ${{ steps.include.outputs.linux-x64 }}
       linux-x64-variants: ${{ steps.include.outputs.linux-x64-variants }}
@@ -446,6 +453,6 @@ jobs:
     with:
       platform: windows-x64
       bootjdk-platform: windows-x64
-      runs-on: windows-2025
+      runs-on: windows-2022
       dry-run: ${{ needs.prepare.outputs.dry-run == 'true' }}
       debug-suffix: -debug

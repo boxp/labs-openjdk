@@ -835,6 +835,8 @@ JVMCI::CodeInstallResult CodeInstaller::install(JVMCICompiler* compiler,
         }
       }
 
+#ifndef ARM32
+      // ARM32 does not provide BarrierSetNMethod::verify_barrier().
       BarrierSetNMethod* bs_nm = BarrierSet::barrier_set()->barrier_set_nmethod();
 
       // an empty error buffer for use by the verify_barrier code
@@ -842,6 +844,7 @@ JVMCI::CodeInstallResult CodeInstaller::install(JVMCICompiler* compiler,
       if (!bs_nm->verify_barrier(nm, msg)) {
         JVMCI_THROW_MSG_(IllegalArgumentException, err_msg("nmethod entry barrier is malformed: %s", msg.buffer()), JVMCI::ok);
       }
+#endif
     }
   }
 
